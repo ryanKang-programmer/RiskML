@@ -8,11 +8,11 @@ from sklearn.preprocessing import StandardScaler
 filename = './dataset.xlsx';
 data = pd.read_excel(filename, engine='openpyxl')
 
-X = data[['Sl.', 'D mm', 't mm', 'L mm', 'd mm', 'YS MPa', 'UTS MPa', 'Exp. MPa', 'B31G MPa', 'M.B31G Mpa', 'DNV Mpa', 'Battelle Mpa', 'Shell Mpa', 'Netto Mpa']].values
-y = data['Pop Mpa'].values
+X = data[['D mm', 't mm', 'L mm', 'd mm', 'YS MPa', 'UTS MPa', 'Exp. MPa', 'B31G MPa', 'M.B31G Mpa', 'DNV Mpa', 'Battelle Mpa', 'Shell Mpa', 'Netto Mpa',
+          'School', 'Population', 'Water']].values
+y = data['Result'].values
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
 scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
@@ -28,34 +28,33 @@ intercept = ridge_model.intercept_
 print("가중치:", coefficients)
 print("절편:", intercept)
 
-# 테스트 데이터에 대한 예측
-y_pred = ridge_model.predict(X_test_scaled)
+def ridgeRegression(rangePercent):
+    # 테스트 데이터에 대한 예측
+    y_pred = ridge_model.predict(X_test_scaled)
+    # 모델 평가 (평균 제곱 오차)
+    mse = mean_squared_error(y_test, y_pred)
+    print("평균 제곱 오차:", mse)
 
-# 모델 평가 (평균 제곱 오차)
-mse = mean_squared_error(y_test, y_pred)
-print("평균 제곱 오차:", mse)
+    error = [];
+    for i in range(len(y_pred)):
+        error.append(np.abs(np.abs(y_pred[i]) - np.abs(y_test[i])) / y_test[i]);
 
-error = [];
-for i in range(len(y_pred)):
-    error.append(np.abs(np.abs(y_pred[i]) - np.abs(y_test[i])) / y_test[i]);
+    acceptable_error = [];
+    for i in range(len(y_pred)):
+        if error[i] <= rangePercent: 
+            acceptable_error.append(error[i]);
 
-acceptable_error = [];
-for i in range(len(y_pred)):
-    if error[i] <= 0.1: 
-        acceptable_error.append(error[i]);
+    # 오차가 20% 이내인 데이터 개수 계산
+    count = len(acceptable_error);
 
-# 오차가 20% 이내인 데이터 개수 계산
-count = len(acceptable_error);
+    # 정확도 계산
+    accuracy = count / len(error)
 
-# 정확도 계산
-accuracy = count / len(error)
+    print("Accuracy:", accuracy)
 
-print("Accuracy:", accuracy)
-
-# 학습된 가중치 및 절편
-coefficients = ridge_model.coef_
-intercept = ridge_model.intercept_
-
-# 예측 함수 정의
-def ridge_regression_predict(features):
-    return intercept + np.dot(features, coefficients)
+    Results = {};
+    Results['machine'] = ridge_model;
+    Results['accuracy'] = accuracy;
+    mse = mean_squared_error(y_test, y_pred)
+    Results['mse'] = mse;
+    return Results;
